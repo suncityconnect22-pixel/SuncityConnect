@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Toast from '@/components/ui/Toast';
+import ImageWithModal from '@/components/ui/ImageWithModal';
 import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
 import type { ComplaintStatus } from '@/lib/types';
 
@@ -93,7 +94,7 @@ export default function AdminComplaintsPage() {
                       )}
                     </div>
                     {complaint.image_url && (
-                      <img src={complaint.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0 shadow-sm border border-gray-100" />
+                      <ImageWithModal src={complaint.image_url} className="w-16 h-16 rounded-xl object-cover shrink-0 shadow-sm border border-gray-100" />
                     )}
                   </div>
 

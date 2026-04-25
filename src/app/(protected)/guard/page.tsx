@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import Toast from '@/components/ui/Toast';
+import ImageWithModal from '@/components/ui/ImageWithModal';
 import { VISITOR_TYPE_LABELS, VISITOR_TYPE_ICONS } from '@/lib/constants';
 import type { VisitorType, Visitor } from '@/lib/types';
 
@@ -239,7 +240,7 @@ export default function GuardPage() {
                   <Card key={visitor.id}>
                     <div className="flex items-center gap-3">
                       {visitor.photo_url ? (
-                        <img src={visitor.photo_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                        <ImageWithModal src={visitor.photo_url} className="w-12 h-12 rounded-full object-cover shrink-0" />
                       ) : (
                         <div className="text-2xl shrink-0 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                           {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}

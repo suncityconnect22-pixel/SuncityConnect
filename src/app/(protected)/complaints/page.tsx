@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
+import ImageWithModal from '@/components/ui/ImageWithModal';
 import Link from 'next/link';
 import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
 import type { ComplaintStatus } from '@/lib/types';
@@ -64,7 +65,7 @@ export default async function ComplaintsPage() {
                     </div>
                   </div>
                   {complaint.image_url && (
-                    <img
+                    <ImageWithModal
                       src={complaint.image_url}
                       alt="Complaint"
                       className="w-16 h-16 rounded-lg object-cover shrink-0"

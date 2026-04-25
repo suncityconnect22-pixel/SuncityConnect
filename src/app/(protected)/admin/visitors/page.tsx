@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getAllVisitors } from '@/actions/visitors';
 import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
+import ImageWithModal from '@/components/ui/ImageWithModal';
 import { VISITOR_TYPE_ICONS, VISITOR_TYPE_LABELS } from '@/lib/constants';
 import type { Visitor } from '@/lib/types';
 
@@ -45,7 +46,7 @@ export default function AdminVisitorsPage() {
               <Card key={visitor.id} className="border-l-4 border-l-blue-400">
                 <div className="flex items-center gap-3">
                   {visitor.photo_url ? (
-                    <img src={visitor.photo_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0 border border-gray-200" />
+                    <ImageWithModal src={visitor.photo_url} className="w-12 h-12 rounded-full object-cover shrink-0 border border-gray-200" />
                   ) : (
                     <div className="text-2xl shrink-0 w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
                       {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}

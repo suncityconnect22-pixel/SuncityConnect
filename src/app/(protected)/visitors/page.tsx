@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
+import ImageWithModal from '@/components/ui/ImageWithModal';
 import { VISITOR_TYPE_LABELS, VISITOR_TYPE_ICONS } from '@/lib/constants';
 
 export default async function VisitorsPage() {
@@ -24,7 +25,7 @@ export default async function VisitorsPage() {
               <Card key={visitor.id}>
                 <div className="flex items-center gap-3">
                   {visitor.photo_url ? (
-                    <img src={visitor.photo_url} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-gray-100 shadow-sm" />
+                    <ImageWithModal src={visitor.photo_url} className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-gray-100 shadow-sm" />
                   ) : (
                     <div className="text-3xl shrink-0 w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-sm">
                       {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}
