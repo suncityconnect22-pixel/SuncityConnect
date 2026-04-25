@@ -28,6 +28,12 @@ export default async function AdminPage() {
       title: 'Manage Staff (कर्मचारी)',
       description: 'Add, edit, remove staff members',
     },
+    {
+      href: '/admin/visitors',
+      icon: '🚪',
+      title: 'Visitor Log (आगंतुक)',
+      description: 'View all society visitors',
+    },
   ];
 
   // Super admin only

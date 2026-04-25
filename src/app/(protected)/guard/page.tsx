@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { recordVisitorEntry, recordVisitorExit, getTodayVisitors } from '@/actions/visitors';
+import { uploadImage } from '@/lib/upload';
 import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -16,6 +17,9 @@ export default function GuardPage() {
   const [selectedType, setSelectedType] = useState<VisitorType | null>(null);
   const [houseNumber, setHouseNumber] = useState('');
   const [visitorName, setVisitorName] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [todayVisitors, setTodayVisitors] = useState<Visitor[]>([]);
@@ -35,14 +39,31 @@ export default function GuardPage() {
     setStep('details');
   };
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedType || !houseNumber.trim()) return;
     setLoading(true);
 
+    let uploadedUrl = undefined;
+
+    // Upload photo if present
+    if (photoFile) {
+      const url = await uploadImage(photoFile, 'visitors');
+      if (url) uploadedUrl = url;
+    }
+
     const result = await recordVisitorEntry(
       houseNumber.trim(),
       selectedType,
-      visitorName.trim() || undefined
+      visitorName.trim() || undefined,
+      uploadedUrl
     );
 
     if (result.error) {
@@ -57,6 +78,8 @@ export default function GuardPage() {
     setSelectedType(null);
     setHouseNumber('');
     setVisitorName('');
+    setPhotoFile(null);
+    setPhotoPreview(null);
     setLoading(false);
   };
 
@@ -86,7 +109,7 @@ export default function GuardPage() {
         }
       />
 
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         {!showLog ? (
           <>
             {step === 'select' ? (
@@ -110,7 +133,7 @@ export default function GuardPage() {
                     <button
                       key={type}
                       onClick={() => handleTypeSelect(type)}
-                      className="bg-white border-2 border-gray-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 active:scale-[0.97] transition-all shadow-sm"
+                      className="bg-white border border-gray-100 rounded-3xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-[0.97] transition-all duration-300"
                     >
                       <span className="text-4xl block mb-2">{VISITOR_TYPE_ICONS[type]}</span>
                       <span className="text-base font-bold text-gray-800 block">
@@ -152,6 +175,37 @@ export default function GuardPage() {
                     onChange={(e) => setVisitorName(e.target.value)}
                   />
 
+                  {/* Photo Upload Box */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Visitor Photo (फोटो) — Optional
+                    </label>
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-2xl p-4 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {photoPreview ? (
+                        <div className="relative">
+                          <img src={photoPreview} alt="Preview" className="h-32 mx-auto rounded-xl object-cover" />
+                          <span className="text-xs text-blue-600 mt-2 block font-medium">Click to change</span>
+                        </div>
+                      ) : (
+                        <div className="py-4">
+                          <span className="text-3xl block mb-2">📸</span>
+                          <span className="text-sm font-medium text-gray-600 block">Take Photo or Upload</span>
+                        </div>
+                      )}
+                    </div>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment"
+                      className="hidden" 
+                      ref={fileInputRef}
+                      onChange={handlePhotoSelect}
+                    />
+                  </div>
+
                   <Button
                     onClick={handleSubmit}
                     fullWidth
@@ -159,6 +213,7 @@ export default function GuardPage() {
                     loading={loading}
                     disabled={!houseNumber.trim()}
                     variant="success"
+                    className="mt-6"
                   >
                     Record Entry (प्रवेश दर्ज करें)
                   </Button>
@@ -183,15 +238,21 @@ export default function GuardPage() {
                 {todayVisitors.map((visitor) => (
                   <Card key={visitor.id}>
                     <div className="flex items-center gap-3">
-                      <div className="text-xl shrink-0">
-                        {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}
-                      </div>
+                      {visitor.photo_url ? (
+                        <img src={visitor.photo_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="text-2xl shrink-0 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900 text-sm truncate">
                             {visitor.name || 'Visitor'}
                           </span>
-                          <span className="text-xs text-gray-400">→ {visitor.house_number}</span>
+                          <span className="text-xs text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">
+                            {visitor.house_number}
+                          </span>
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
                           In: {new Date(visitor.entry_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
