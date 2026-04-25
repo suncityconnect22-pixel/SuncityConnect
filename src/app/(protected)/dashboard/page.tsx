@@ -12,24 +12,17 @@ export default async function DashboardPage() {
 
   const { data: latestNotice } = await getLatestNotice();
 
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning (सुप्रभात)';
-    if (hour < 17) return 'Good Afternoon (नमस्कार)';
-    return 'Good Evening (शुभ संध्या)';
-  };
-
   return (
     <>
       <Header title="Home (होम)" />
-      <div className="px-4 py-4 space-y-5">
+      <div className="px-4 py-4 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
         {/* Greeting */}
         <div>
-          <p className="text-sm text-gray-500">{greeting()}</p>
-          <h2 className="text-xl font-bold text-gray-900 mt-0.5">
+          <p className="text-sm text-gray-500 font-medium">Hello (नमस्ते)</p>
+          <h2 className="text-2xl font-bold text-gray-900 mt-0.5">
             {user.name} 👋
           </h2>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <p className="text-sm font-medium text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded-md mt-1.5">
             House: {user.house_number}
           </p>
         </div>
