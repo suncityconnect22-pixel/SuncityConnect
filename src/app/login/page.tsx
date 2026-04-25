@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithOtp } from '@/actions/auth';
+import { signInWithPassword, signUpWithPassword } from '@/actions/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -19,13 +21,27 @@ export default function LoginPage() {
 
     const formData = new FormData();
     formData.set('email', email);
-    const result = await signInWithOtp(formData);
-
-    if (result.error) {
-      setError(result.error);
-      setLoading(false);
+    formData.set('password', password);
+    
+    if (isSignUp) {
+      const result = await signUpWithPassword(formData);
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+      } else {
+        // If email confirmation is disabled, user is now logged in.
+        router.push('/dashboard');
+        router.refresh();
+      }
     } else {
-      router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+      const result = await signInWithPassword(formData);
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+      } else {
+        router.push('/dashboard');
+        router.refresh();
+      }
     }
   };
 
@@ -52,7 +68,16 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            autoFocus
+          />
+
+          <Input
+            label="Password (पासवर्ड)"
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
           />
 
           {error && (
@@ -62,14 +87,18 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" fullWidth size="lg" loading={loading}>
-            Send OTP (कोड भेजें)
+            {isSignUp ? 'Create Account (खाता बनाएं)' : 'Login (लॉगिन)'}
           </Button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-8">
-          We'll send a one-time code to your email.<br />
-          No password needed (पासवर्ड की जरूरत नहीं)
-        </p>
+        <div className="text-center mt-6">
+          <button 
+            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+          >
+            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
+        </div>
       </div>
     </div>
   );
