@@ -23,9 +23,13 @@ export default async function VisitorsPage() {
             {visitors.map((visitor) => (
               <Card key={visitor.id}>
                 <div className="flex items-center gap-3">
-                  <div className="text-2xl shrink-0">
-                    {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}
-                  </div>
+                  {visitor.photo_url ? (
+                    <img src={visitor.photo_url} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-gray-100 shadow-sm" />
+                  ) : (
+                    <div className="text-3xl shrink-0 w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-sm">
+                      {VISITOR_TYPE_ICONS[visitor.visitor_type] || '👤'}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-900 truncate">
