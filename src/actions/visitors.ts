@@ -104,3 +104,20 @@ export async function recordVisitorExit(visitorId: string) {
   revalidatePath('/visitors');
   return { success: true };
 }
+
+export async function deleteVisitor(visitorId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('visitors')
+    .delete()
+    .eq('id', visitorId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath('/guard');
+  revalidatePath('/visitors');
+  revalidatePath('/admin/visitors');
+  revalidatePath('/dashboard');
+  return { success: true };
+}

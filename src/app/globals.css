@@ -88,3 +88,14 @@ body {
 .toast-enter {
   animation: slideUp 0.3s ease-out;
 }
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(20deg); }
+  75% { transform: rotate(-5deg); }
+}
+.animate-wave {
+  animation: wave 1.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getAllUsers, approveUser, rejectUser, updateUserRole, updatePaymentStatus } from '@/actions/users';
+import { getAllUsers, approveUser, rejectUser, updateUserRole, updatePaymentStatus, deleteUser } from '@/actions/users';
 import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -47,6 +47,13 @@ export default function AdminUsersPage() {
     const r = await updatePaymentStatus(id, status);
     if (r.error) setToast({ message: r.error, type: 'error' });
     else { setToast({ message: 'Payment status updated', type: 'success' }); await load(); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to completely remove this user? This cannot be undone.')) return;
+    const r = await deleteUser(id);
+    if (r.error) setToast({ message: r.error, type: 'error' });
+    else { setToast({ message: 'User permanently deleted', type: 'success' }); await load(); }
   };
 
   const filtered = filter === 'all' ? users
@@ -141,6 +148,15 @@ export default function AdminUsersPage() {
                           <option value="guard">Guard</option>
                           <option value="super_admin">Super Admin</option>
                         </select>
+                      </div>
+                      {/* Delete user */}
+                      <div className="flex items-center justify-end pt-2 border-t border-gray-100 mt-2">
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
+                        >
+                          🗑️ Remove Access / Delete
+                        </button>
                       </div>
                     </div>
                   )}

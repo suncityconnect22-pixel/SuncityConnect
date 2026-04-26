@@ -85,3 +85,19 @@ export async function updateComplaintStatus(complaintId: string, status: Complai
   revalidatePath('/admin/complaints');
   return { success: true };
 }
+
+export async function deleteComplaint(complaintId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('complaints')
+    .delete()
+    .eq('id', complaintId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath('/complaints');
+  revalidatePath('/admin/complaints');
+  revalidatePath('/dashboard');
+  return { success: true };
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getAllComplaints, updateComplaintStatus } from '@/actions/complaints';
+import { getAllComplaints, updateComplaintStatus, deleteComplaint } from '@/actions/complaints';
 import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -44,6 +44,20 @@ export default function AdminComplaintsPage() {
       setToast({ message: result.error, type: 'error' });
     } else {
       setToast({ message: `Status updated to ${COMPLAINT_STATUS_LABELS[newStatus]}`, type: 'success' });
+      await loadComplaints();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this complaint?')) return;
+    
+    setLoading(true);
+    const result = await deleteComplaint(id);
+    if (result.error) {
+      setToast({ message: result.error, type: 'error' });
+      setLoading(false);
+    } else {
+      setToast({ message: 'Complaint deleted permanently', type: 'success' });
       await loadComplaints();
     }
   };
@@ -123,6 +137,13 @@ export default function AdminComplaintsPage() {
                           {s === 'open' ? 'Open' : s === 'in_progress' ? 'In Progress' : 'Resolved'}
                         </button>
                       ))}
+                      <button
+                        onClick={() => handleDelete(complaint.id)}
+                        className="py-1.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-red-500 hover:bg-red-50 border border-red-200 shadow-sm"
+                        title="Delete Permanently"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getAllVisitors } from '@/actions/visitors';
+import { getAllVisitors, deleteVisitor } from '@/actions/visitors';
 import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import ImageWithModal from '@/components/ui/ImageWithModal';
+import Toast from '@/components/ui/Toast';
 import { VISITOR_TYPE_ICONS, VISITOR_TYPE_LABELS } from '@/lib/constants';
 import type { Visitor } from '@/lib/types';
 
 export default function AdminVisitorsPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const loadVisitors = useCallback(async () => {
     const result = await getAllVisitors();
@@ -21,6 +23,20 @@ export default function AdminVisitorsPage() {
   useEffect(() => {
     loadVisitors();
   }, [loadVisitors]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this visitor log?')) return;
+    
+    setLoading(true);
+    const result = await deleteVisitor(id);
+    if (result.error) {
+      setToast({ message: result.error, type: 'error' });
+      setLoading(false);
+    } else {
+      setToast({ message: 'Visitor log deleted permanently', type: 'success' });
+      await loadVisitors();
+    }
+  };
 
   return (
     <>
@@ -80,12 +96,22 @@ export default function AdminVisitorsPage() {
                       )}
                     </div>
                   </div>
+                  
+                  <button
+                    onClick={() => handleDelete(visitor.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors self-start shrink-0"
+                    title="Delete Visitor"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   );
 }

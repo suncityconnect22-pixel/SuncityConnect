@@ -141,3 +141,20 @@ export async function updatePaymentStatus(userId: string, status: PaymentStatus)
   revalidatePath('/admin/users');
   return { success: true };
 }
+
+// Super admin: Delete user (remove completely)
+export async function deleteUser(userId: string) {
+  const supabase = await createClient();
+  
+  // Delete from users table
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', userId);
+
+  if (error) return { error: error.message };
+  
+  revalidatePath('/admin/users');
+  revalidatePath('/dashboard');
+  return { success: true };
+}
