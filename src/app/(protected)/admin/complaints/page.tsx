@@ -58,7 +58,8 @@ export default function AdminComplaintsPage() {
       setLoading(false);
     } else {
       setToast({ message: 'Complaint deleted permanently', type: 'success' });
-      await loadComplaints();
+      setComplaints(prev => prev.filter(c => c.id !== id));
+      setLoading(false);
     }
   };
 
@@ -68,7 +69,7 @@ export default function AdminComplaintsPage() {
     <>
       <Header title="Manage Complaints" showBack />
 
-      <div className="px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Filter tabs */}
         <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
           {['all', 'open', 'in_progress', 'resolved'].map((s) => (

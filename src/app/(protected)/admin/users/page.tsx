@@ -27,33 +27,48 @@ export default function AdminUsersPage() {
   const handleApprove = async (id: string) => {
     const r = await approveUser(id);
     if (r.error) setToast({ message: r.error, type: 'error' });
-    else { setToast({ message: 'User approved ✅', type: 'success' }); await load(); }
+    else { 
+      setToast({ message: 'User approved ✅', type: 'success' }); 
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, is_approved: true } : u));
+    }
   };
 
   const handleReject = async (id: string) => {
     if (!confirm('Reject and remove this user?')) return;
     const r = await rejectUser(id);
     if (r.error) setToast({ message: r.error, type: 'error' });
-    else { setToast({ message: 'User rejected', type: 'success' }); await load(); }
+    else { 
+      setToast({ message: 'User rejected', type: 'success' }); 
+      setUsers(prev => prev.filter(u => u.id !== id));
+    }
   };
 
   const handleRoleChange = async (id: string, role: UserRole) => {
     const r = await updateUserRole(id, role);
     if (r.error) setToast({ message: r.error, type: 'error' });
-    else { setToast({ message: 'Role updated', type: 'success' }); await load(); }
+    else { 
+      setToast({ message: 'Role updated', type: 'success' }); 
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u));
+    }
   };
 
   const handlePayment = async (id: string, status: PaymentStatus) => {
     const r = await updatePaymentStatus(id, status);
     if (r.error) setToast({ message: r.error, type: 'error' });
-    else { setToast({ message: 'Payment status updated', type: 'success' }); await load(); }
+    else { 
+      setToast({ message: 'Payment status updated', type: 'success' }); 
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, payment_status: status } : u));
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to completely remove this user? This cannot be undone.')) return;
     const r = await deleteUser(id);
     if (r.error) setToast({ message: r.error, type: 'error' });
-    else { setToast({ message: 'User permanently deleted', type: 'success' }); await load(); }
+    else { 
+      setToast({ message: 'User permanently deleted', type: 'success' }); 
+      setUsers(prev => prev.filter(u => u.id !== id));
+    }
   };
 
   const filtered = filter === 'all' ? users

@@ -34,7 +34,8 @@ export default function AdminVisitorsPage() {
       setLoading(false);
     } else {
       setToast({ message: 'Visitor log deleted permanently', type: 'success' });
-      await loadVisitors();
+      setVisitors(prev => prev.filter(v => v.id !== id));
+      setLoading(false);
     }
   };
 
@@ -42,7 +43,7 @@ export default function AdminVisitorsPage() {
     <>
       <Header title="All Society Visitors" showBack />
 
-      <div className="px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="px-4 py-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <p className="text-sm text-gray-500 mb-4">
           Showing the last 100 visitor entries across the entire society.
         </p>
