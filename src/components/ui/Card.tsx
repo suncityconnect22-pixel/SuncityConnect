@@ -11,14 +11,14 @@ export default function Card({ children, className = '', onClick, highlight }: C
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-3xl border ${
+      className={`bg-white rounded-2xl border ${
         highlight 
-          ? 'border-blue-200 bg-blue-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]' 
-          : 'border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)]'
-      } p-5 ${
+          ? 'border-blue-200 bg-gradient-to-br from-blue-50/60 to-white shadow-[0_4px_20px_rgb(59,130,246,0.08)]' 
+          : 'border-gray-100/80 shadow-[0_2px_12px_rgb(0,0,0,0.03)]'
+      } p-4 ${
         onClick 
-          ? 'cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300' 
-          : ''
+          ? 'cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200' 
+          : 'transition-shadow duration-200'
       } ${className}`}
     >
       {children}

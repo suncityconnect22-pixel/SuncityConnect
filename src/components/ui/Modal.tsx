@@ -19,7 +19,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       />
       {/* Modal content */}
       <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-xl animate-in slide-in-from-bottom z-10">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
@@ -31,7 +31,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             </svg>
           </button>
         </div>
-        <div className="p-5">
+        <div className="p-5 pb-28">
           {children}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Bell, MessageSquare, User, Shield, Users, ClipboardList } from 'lucide-react';
+import { Home, Bell, MessageSquare, User, Shield, Users, ClipboardList, Eye } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 
 interface BottomNavProps {
@@ -21,16 +21,18 @@ export default function BottomNav({ role }: BottomNavProps) {
         ];
       case 'super_admin':
         return [
-          { href: '/dashboard', icon: Home, label: 'Home (होम)' },
+          { href: '/dashboard', icon: Home, label: 'Home' },
           { href: '/admin', icon: Shield, label: 'Manage' },
-          { href: '/admin/users', icon: Users, label: 'Users' },
+          { href: '/complaints', icon: MessageSquare, label: 'My Issues' },
+          { href: '/visitors', icon: Eye, label: 'Visitors' },
           { href: '/profile', icon: User, label: 'Profile' },
         ];
       case 'admin':
         return [
-          { href: '/dashboard', icon: Home, label: 'Home (होम)' },
+          { href: '/dashboard', icon: Home, label: 'Home' },
           { href: '/admin', icon: Shield, label: 'Manage' },
-          { href: '/complaints', icon: ClipboardList, label: 'Complaints' },
+          { href: '/complaints', icon: MessageSquare, label: 'My Issues' },
+          { href: '/visitors', icon: Eye, label: 'Visitors' },
           { href: '/profile', icon: User, label: 'Profile' },
         ];
       default: // user
@@ -46,8 +48,8 @@ export default function BottomNav({ role }: BottomNavProps) {
   const navItems = getNavItems();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-pb">
-      <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 safe-area-pb">
+      <div className="max-w-lg mx-auto flex items-center justify-around px-1 py-1.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href || 
             (item.href !== '/dashboard' && item.href !== '/guard' && pathname.startsWith(item.href));
@@ -56,16 +58,21 @@ export default function BottomNav({ role }: BottomNavProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-2 px-3 min-w-[64px] tap-target rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center py-1.5 px-2 min-w-[56px] rounded-xl transition-all duration-200 ${
                 isActive
                   ? 'text-blue-600'
-                  : 'text-gray-400 hover:text-gray-600'
+                  : 'text-gray-400 hover:text-gray-600 active:scale-95'
               }`}
             >
-              <item.icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-              <span className={`text-[10px] mt-0.5 font-medium ${isActive ? 'font-bold' : ''}`}>
+              <div className={`relative p-1 rounded-lg transition-all duration-200 ${isActive ? 'bg-blue-50' : ''}`}>
+                <item.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
+              </div>
+              <span className={`text-[9px] mt-0.5 font-medium leading-tight text-center ${isActive ? 'font-bold text-blue-600' : ''}`}>
                 {item.label}
               </span>
+              {isActive && (
+                <div className="w-4 h-0.5 bg-blue-600 rounded-full mt-0.5" />
+              )}
             </Link>
           );
         })}

@@ -1,11 +1,13 @@
 import { getCurrentUser } from '@/actions/users';
 import { getLatestNotice } from '@/actions/notices';
 import { getDashboardCounts } from '@/actions/dashboard';
+import { getAllComplaints } from '@/actions/complaints';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Header from '@/components/Header';
 import Badge from '@/components/ui/Badge';
+import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -15,104 +17,227 @@ export default async function DashboardPage() {
   const isAdmin = user.role === 'admin' || user.role === 'super_admin';
   const counts = await getDashboardCounts(isAdmin, user.house_number || '');
 
+  // For admin, get recent complaints (top 5)
+  let recentComplaints: { id: string; title: string; status: string; house_number: string; created_at: string }[] = [];
+  if (isAdmin) {
+    const { data } = await getAllComplaints();
+    if (data) recentComplaints = data.slice(0, 5);
+  }
+
   return (
     <>
       <Header title="SuncityConnect" />
       <div className="px-4 py-4 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Greeting Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl pointer-events-none">✨</div>
-          <p className="text-xs text-blue-600 font-semibold tracking-wide uppercase">Hello (नमस्ते)</p>
-          <h2 className="text-2xl font-bold text-gray-900 mt-0.5">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+          <p className="text-xs text-blue-200 font-semibold tracking-wide uppercase">
+            {isAdmin ? (user.role === 'super_admin' ? '👑 Super Admin' : '⚙️ Admin') : 'Hello (नमस्ते)'}
+          </p>
+          <h2 className="text-2xl font-bold text-white mt-0.5">
             {user.name} <span className="inline-block animate-wave">👋</span>
           </h2>
-          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
-            <span className="text-sm font-bold text-gray-700">House: {user.house_number}</span>
+          <div className="mt-3 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
+            <span className="text-sm font-bold text-white/90">🏠 House: {user.house_number}</span>
           </div>
         </div>
 
-        {/* Latest Notice */}
-        {latestNotice && (
-          <Link href="/notices" className="block active:opacity-70 transition-opacity">
-            <Card highlight={latestNotice.is_important} className="shadow-sm border-gray-100 rounded-2xl overflow-hidden">
-              <div className="flex items-start gap-4 p-1">
-                <div className={`text-2xl shrink-0 p-3 rounded-xl ${latestNotice.is_important ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                  {latestNotice.is_important ? '🔴' : '📢'}
-                </div>
-                <div className="flex-1 min-w-0 pt-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Latest Notice</span>
+        {isAdmin ? (
+          /* ========== ADMIN DASHBOARD ========== */
+          <>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/admin/complaints" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-4 rounded-2xl border-gray-100 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-transparent" />
+                  <div className="relative">
+                    <span className="text-3xl block mb-1">🔥</span>
+                    <span className="text-2xl font-black text-gray-900 block">{counts.pendingComplaints}</span>
+                    <span className="text-xs font-semibold text-gray-500">Open Complaints</span>
+                  </div>
+                </Card>
+              </Link>
+
+              <Link href="/admin/visitors" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-4 rounded-2xl border-gray-100 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent" />
+                  <div className="relative">
+                    <span className="text-3xl block mb-1">🚪</span>
+                    <span className="text-2xl font-black text-gray-900 block">{counts.visitorsCount}</span>
+                    <span className="text-xs font-semibold text-gray-500">Visitors Today</span>
+                  </div>
+                </Card>
+              </Link>
+
+              <Link href="/admin/notices" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-4 rounded-2xl border-gray-100 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-transparent" />
+                  <div className="relative">
+                    <span className="text-3xl block mb-1">📢</span>
+                    <span className="text-2xl font-black text-gray-900 block">{counts.totalNotices}</span>
+                    <span className="text-xs font-semibold text-gray-500">Total Notices</span>
+                  </div>
+                </Card>
+              </Link>
+
+              {user.role === 'super_admin' ? (
+                <Link href="/admin/users" className="block active:opacity-70 transition-opacity">
+                  <Card className="text-center py-4 rounded-2xl border-gray-100 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent" />
+                    <div className="relative">
+                      <span className="text-3xl block mb-1">👥</span>
+                      <span className="text-2xl font-black text-gray-900 block">{counts.pendingUsers}</span>
+                      <span className="text-xs font-semibold text-gray-500">Pending Users</span>
+                    </div>
+                  </Card>
+                </Link>
+              ) : (
+                <Link href="/admin/staff" className="block active:opacity-70 transition-opacity">
+                  <Card className="text-center py-4 rounded-2xl border-gray-100 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent" />
+                    <div className="relative">
+                      <span className="text-3xl block mb-1">👥</span>
+                      <span className="text-2xl font-black text-gray-900 block">Staff</span>
+                      <span className="text-xs font-semibold text-gray-500">Manage Team</span>
+                    </div>
+                  </Card>
+                </Link>
+              )}
+            </div>
+
+            {/* Latest Notice */}
+            {latestNotice && (
+              <Link href="/admin/notices" className="block active:opacity-70 transition-opacity">
+                <Card highlight={latestNotice.is_important} className="rounded-2xl overflow-hidden">
+                  <div className="flex items-start gap-3">
+                    <div className={`text-xl shrink-0 p-2.5 rounded-xl ${latestNotice.is_important ? 'bg-red-50' : 'bg-blue-50'}`}>
+                      {latestNotice.is_important ? '🔴' : '📢'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Latest Notice</span>
+                      <h3 className="font-bold text-gray-900 truncate text-sm mt-0.5">{latestNotice.title}</h3>
+                    </div>
                     {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
                   </div>
-                  <h3 className="font-bold text-gray-900 truncate text-base">{latestNotice.title}</h3>
+                </Card>
+              </Link>
+            )}
+
+            {/* Recent Complaints Overview */}
+            {recentComplaints.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Recent Complaints</h3>
+                  <Link href="/admin/complaints" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                    View All →
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  {recentComplaints.map((c) => (
+                    <Link key={c.id} href="/admin/complaints" className="block">
+                      <Card className="rounded-xl !p-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            c.status === 'open' ? 'bg-red-500' : c.status === 'in_progress' ? 'bg-orange-500' : 'bg-green-500'
+                          }`} />
+                          <span className="text-sm font-medium text-gray-800 truncate flex-1">{c.title}</span>
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+                            {c.house_number}
+                          </span>
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
                 </div>
               </div>
-            </Card>
-          </Link>
-        )}
+            )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/complaints" className="block active:opacity-70 transition-opacity">
-            <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
-              <span className="text-3xl mb-2 block">📝</span>
-              <span className="text-sm font-bold text-gray-800">My Complaints</span>
-              {counts.pendingComplaints > 0 && (
-                <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                  {counts.pendingComplaints}
-                </span>
-              )}
-            </Card>
-          </Link>
+            {/* Quick Admin Actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/admin/staff" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-4 rounded-2xl border-gray-100">
+                  <span className="text-2xl block mb-1">👷</span>
+                  <span className="text-xs font-bold text-gray-700">Manage Staff</span>
+                </Card>
+              </Link>
+              <Link href="/staff" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-4 rounded-2xl border-gray-100">
+                  <span className="text-2xl block mb-1">📞</span>
+                  <span className="text-xs font-bold text-gray-700">Staff Directory</span>
+                </Card>
+              </Link>
+            </div>
+          </>
+        ) : (
+          /* ========== REGULAR USER DASHBOARD ========== */
+          <>
+            {/* Latest Notice */}
+            {latestNotice && (
+              <Link href="/notices" className="block active:opacity-70 transition-opacity">
+                <Card highlight={latestNotice.is_important} className="shadow-sm border-gray-100 rounded-2xl overflow-hidden">
+                  <div className="flex items-start gap-4 p-1">
+                    <div className={`text-2xl shrink-0 p-3 rounded-xl ${latestNotice.is_important ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                      {latestNotice.is_important ? '🔴' : '📢'}
+                    </div>
+                    <div className="flex-1 min-w-0 pt-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Latest Notice</span>
+                        {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
+                      </div>
+                      <h3 className="font-bold text-gray-900 truncate text-base">{latestNotice.title}</h3>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            )}
 
-          <Link href="/visitors" className="block active:opacity-70 transition-opacity">
-            <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
-              <span className="text-3xl mb-2 block">🚪</span>
-              <span className="text-sm font-bold text-gray-800">Visitors Log</span>
-              {counts.visitorsCount > 0 && (
-                <span className="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                  {counts.visitorsCount}
-                </span>
-              )}
-            </Card>
-          </Link>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/complaints" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
+                  <span className="text-3xl mb-2 block">📝</span>
+                  <span className="text-sm font-bold text-gray-800">My Complaints</span>
+                  {counts.pendingComplaints > 0 && (
+                    <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                      {counts.pendingComplaints}
+                    </span>
+                  )}
+                </Card>
+              </Link>
 
-          <Link href="/notices" className="block active:opacity-70 transition-opacity">
-            <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
-              <span className="text-3xl mb-2 block">📋</span>
-              <span className="text-sm font-bold text-gray-800">All Notices</span>
-              {counts.totalNotices > 0 && (
-                <span className="absolute top-2 right-2 bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-gray-200">
-                  {counts.totalNotices}
-                </span>
-              )}
-            </Card>
-          </Link>
+              <Link href="/visitors" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
+                  <span className="text-3xl mb-2 block">🚪</span>
+                  <span className="text-sm font-bold text-gray-800">Visitors Log</span>
+                  {counts.visitorsCount > 0 && (
+                    <span className="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                      {counts.visitorsCount}
+                    </span>
+                  )}
+                </Card>
+              </Link>
 
-          <Link href="/staff" className="block active:opacity-70 transition-opacity">
-            <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl">
-              <span className="text-3xl mb-2 block">👥</span>
-              <span className="text-sm font-bold text-gray-800">Staff List</span>
-            </Card>
-          </Link>
-        </div>
+              <Link href="/notices" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl relative">
+                  <span className="text-3xl mb-2 block">📋</span>
+                  <span className="text-sm font-bold text-gray-800">All Notices</span>
+                  {counts.totalNotices > 0 && (
+                    <span className="absolute top-2 right-2 bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-gray-200">
+                      {counts.totalNotices}
+                    </span>
+                  )}
+                </Card>
+              </Link>
 
-        {/* Admin Link */}
-        {isAdmin && (
-          <Link href="/admin" className="block active:opacity-70 transition-opacity">
-            <Card className="bg-slate-900 text-white border-transparent rounded-2xl p-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-xl shrink-0">⚙️</div>
-                <div className="flex-1">
-                  <h3 className="font-bold">Admin Panel</h3>
-                  <p className="text-slate-400 text-[10px]">Manage users & settings</p>
-                </div>
-                <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Card>
-          </Link>
+              <Link href="/staff" className="block active:opacity-70 transition-opacity">
+                <Card className="text-center py-5 hover:bg-gray-50 border-gray-100 rounded-2xl">
+                  <span className="text-3xl mb-2 block">👥</span>
+                  <span className="text-sm font-bold text-gray-800">Staff List</span>
+                </Card>
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </>

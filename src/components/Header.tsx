@@ -13,7 +13,7 @@ export default function Header({ title, showBack = false, action }: HeaderProps)
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
         <div className="flex items-center gap-3">
           {showBack && (
@@ -29,6 +29,7 @@ export default function Header({ title, showBack = false, action }: HeaderProps)
         </div>
         {action && <div>{action}</div>}
       </div>
+      <div className="h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-400 opacity-60" />
     </header>
   );
 }

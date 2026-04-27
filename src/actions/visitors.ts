@@ -34,13 +34,17 @@ export async function getMyVisitors() {
 
 export async function getTodayVisitors() {
   const supabase = await createClient();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Calculate IST midnight (UTC+5:30) regardless of server timezone
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000; // 5h 30m in ms
+  const istNow = new Date(now.getTime() + istOffset);
+  const istMidnight = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate()));
+  const utcMidnightForIST = new Date(istMidnight.getTime() - istOffset);
 
   const { data, error } = await supabase
     .from('visitors')
     .select('*')
-    .gte('entry_time', today.toISOString())
+    .gte('entry_time', utcMidnightForIST.toISOString())
     .order('entry_time', { ascending: false });
 
   if (error) return { error: error.message, data: null };

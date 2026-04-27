@@ -270,6 +270,22 @@ CREATE POLICY "staff_update_admin" ON public.staff
 CREATE POLICY "staff_delete_admin" ON public.staff
   FOR DELETE USING (get_user_role() IN ('admin', 'super_admin'));
 
+-- ===================== RLS POLICIES: complaints (DELETE) =====================
+
+-- Admin/super_admin can delete complaints
+CREATE POLICY "complaints_delete_admin" ON public.complaints
+  FOR DELETE USING (get_user_role() IN ('admin', 'super_admin'));
+
+-- ===================== RLS POLICIES: visitors (DELETE) =====================
+
+-- Admin/super_admin can delete visitors
+CREATE POLICY "visitors_delete_admin" ON public.visitors
+  FOR DELETE USING (get_user_role() IN ('admin', 'super_admin'));
+
+-- Guard can delete visitors (for corrections)
+CREATE POLICY "visitors_delete_guard" ON public.visitors
+  FOR DELETE USING (get_user_role() = 'guard');
+
 -- ===================== DONE =====================
 -- After running this, sign up with your email, then run:
 -- UPDATE public.users SET role = 'super_admin', is_approved = true, payment_status = 'paid' WHERE email = 'your@email.com';
