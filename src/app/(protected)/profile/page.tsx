@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import NotificationToggle from '@/components/NotificationToggle';
 import { ROLE_LABELS, PAYMENT_STATUS_LABELS } from '@/lib/constants';
 
 export default async function ProfilePage() {
@@ -61,6 +62,8 @@ export default async function ProfilePage() {
                 })}
               </span>
             </div>
+            <div className="border-t border-gray-100" />
+            <NotificationToggle />
           </div>
         </Card>
 
