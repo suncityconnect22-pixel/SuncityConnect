@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { sendNotificationToHouse } from '@/lib/notifications';
 import type { VisitorType } from '@/lib/types';
 
 export async function getMyVisitors() {
@@ -89,6 +90,14 @@ export async function recordVisitorEntry(
 
   if (error) return { error: error.message };
 
+  // Notify house owner
+  await sendNotificationToHouse(
+    house_number.trim().toUpperCase(),
+    '🚪 Visitor Arrival',
+    `${visitor_type === 'GUEST' ? 'A guest' : 'A delivery person'} has entered for house ${house_number}.`,
+    { url: '/visitors' }
+  );
+
   revalidatePath('/guard');
   revalidatePath('/visitors');
   return { success: true };
@@ -97,12 +106,29 @@ export async function recordVisitorEntry(
 export async function recordVisitorExit(visitorId: string) {
   const supabase = await createClient();
 
+  // Get visitor details for notification
+  const { data: visitor } = await supabase
+    .from('visitors')
+    .select('house_number, name')
+    .eq('id', visitorId)
+    .single();
+
   const { error } = await supabase
     .from('visitors')
     .update({ exit_time: new Date().toISOString() })
     .eq('id', visitorId);
 
   if (error) return { error: error.message };
+
+  // Notify house owner
+  if (visitor) {
+    await sendNotificationToHouse(
+      visitor.house_number,
+      '🚶 Visitor Exit',
+      `${visitor.name || 'A visitor'} has left the premises.`,
+      { url: '/visitors' }
+    );
+  }
 
   revalidatePath('/guard');
   revalidatePath('/visitors');

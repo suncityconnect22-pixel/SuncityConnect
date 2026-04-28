@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { sendNotificationToUsers } from '@/lib/notifications';
 import type { ComplaintStatus } from '@/lib/types';
 
 export async function getMyComplaints() {
@@ -74,12 +75,29 @@ export async function createComplaint(formData: FormData) {
 export async function updateComplaintStatus(complaintId: string, status: ComplaintStatus) {
   const supabase = await createClient();
 
+  // Get complaint details for notification
+  const { data: complaint } = await supabase
+    .from('complaints')
+    .select('user_id, title')
+    .eq('id', complaintId)
+    .single();
+
   const { error } = await supabase
     .from('complaints')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', complaintId);
 
   if (error) return { error: error.message };
+
+  // Notify the user who filed the complaint
+  if (complaint) {
+    await sendNotificationToUsers(
+      [complaint.user_id],
+      '🛠️ Complaint Update',
+      `Your complaint "${complaint.title}" is now ${status.toLowerCase()}.`,
+      { url: '/complaints' }
+    );
+  }
 
   revalidatePath('/complaints');
   revalidatePath('/admin/complaints');

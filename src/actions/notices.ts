@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { sendNotificationToAll } from '@/lib/notifications';
 
 export async function getNotices() {
   const supabase = await createClient();
@@ -55,6 +56,13 @@ export async function createNotice(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  // Notify all approved users
+  await sendNotificationToAll(
+    is_important ? '🚨 Important Notice' : '📢 New Notice',
+    title,
+    { url: '/notices' }
+  );
 
   revalidatePath('/notices');
   revalidatePath('/admin/notices');

@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { sendNotificationToUsers } from '@/lib/notifications';
 import type { UserRole, PaymentStatus } from '@/lib/types';
 
 // Get current user profile
@@ -91,6 +92,14 @@ export async function approveUser(userId: string) {
     .eq('id', userId);
 
   if (error) return { error: error.message };
+
+  // Notify the user
+  await sendNotificationToUsers(
+    [userId],
+    '🎉 Account Approved',
+    'Your account has been approved. You can now access all features.',
+    { url: '/dashboard' }
+  );
   
   revalidatePath('/admin/users');
   return { success: true };
