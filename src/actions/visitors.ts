@@ -94,7 +94,7 @@ export async function recordVisitorEntry(
   await sendNotificationToHouse(
     house_number.trim().toUpperCase(),
     '🚪 Visitor Arrival',
-    `${visitor_type === 'GUEST' ? 'A guest' : 'A delivery person'} has entered for house ${house_number}.`,
+    `${visitor_type === 'guest' ? 'A guest' : 'A delivery person'} has entered for house ${house_number}.`,
     { url: '/visitors' }
   );
 
