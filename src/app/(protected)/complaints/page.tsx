@@ -11,6 +11,7 @@ import Modal from '@/components/ui/Modal';
 import ImageWithModal from '@/components/ui/ImageWithModal';
 import Link from 'next/link';
 import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
+import { supabase } from '@/lib/supabase/client';
 import type { ComplaintStatus, Complaint } from '@/lib/types';
 
 const statusVariant = (status: ComplaintStatus) => {
@@ -32,7 +33,31 @@ export default function ComplaintsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadComplaints(); }, [loadComplaints]);
+  useEffect(() => {
+    loadComplaints();
+    
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('realtime:my_complaints')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'complaints',
+        },
+        () => {
+          // Simplest way: just reload all complaints when any change happens
+          // (Since this is 'my' complaints, RLS will ensure we only see ours)
+          loadComplaints();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadComplaints]);
 
   if (loading) {
     return (

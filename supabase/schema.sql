@@ -286,6 +286,39 @@ CREATE POLICY "visitors_delete_admin" ON public.visitors
 CREATE POLICY "visitors_delete_guard" ON public.visitors
   FOR DELETE USING (get_user_role() = 'guard');
 
+-- ===================== PUSH TOKENS (for FCM) =====================
+
+CREATE TABLE IF NOT EXISTS public.push_tokens (
+  token TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  device_type TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.push_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Users can manage their own tokens
+CREATE POLICY "push_tokens_insert_own" ON public.push_tokens
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "push_tokens_select_own" ON public.push_tokens
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "push_tokens_delete_own" ON public.push_tokens
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Admin can read all tokens (for sending notifications)
+CREATE POLICY "push_tokens_select_admin" ON public.push_tokens
+  FOR SELECT USING (get_user_role() IN ('admin', 'super_admin'));
+
+-- ===================== REALTIME PUBLICATION =====================
+-- Enable Realtime for tables that need live updates
+-- Run this AFTER creating the tables above
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.visitors;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.complaints;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notices;
+
 -- ===================== DONE =====================
 -- After running this, sign up with your email, then run:
 -- UPDATE public.users SET role = 'super_admin', is_approved = true, payment_status = 'paid' WHERE email = 'your@email.com';

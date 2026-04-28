@@ -11,6 +11,7 @@ import Badge from '@/components/ui/Badge';
 import Toast from '@/components/ui/Toast';
 import ImageWithModal from '@/components/ui/ImageWithModal';
 import { VISITOR_TYPE_LABELS, VISITOR_TYPE_ICONS } from '@/lib/constants';
+import { supabase } from '@/lib/supabase/client';
 import type { VisitorType, Visitor } from '@/lib/types';
 
 export default function GuardPage() {
@@ -33,6 +34,26 @@ export default function GuardPage() {
 
   useEffect(() => {
     loadTodayVisitors();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('realtime:guard_visitors')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'visitors',
+        },
+        () => {
+          loadTodayVisitors();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [loadTodayVisitors]);
 
   const handleTypeSelect = (type: VisitorType) => {

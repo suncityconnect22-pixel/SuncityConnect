@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
+import { supabase } from '@/lib/supabase/client';
 import type { Notice } from '@/lib/types';
 
 export default function NoticesPage() {
@@ -19,7 +20,29 @@ export default function NoticesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadNotices(); }, [loadNotices]);
+  useEffect(() => {
+    loadNotices();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('realtime:notices')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notices',
+        },
+        () => {
+          loadNotices();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadNotices]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);

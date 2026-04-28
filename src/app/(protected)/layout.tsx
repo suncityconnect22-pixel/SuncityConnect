@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/actions/users';
 import { redirect } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
+import NotificationHandler from '@/components/NotificationHandler';
 import type { UserRole } from '@/lib/types';
 
 export default async function ProtectedLayout({
@@ -19,6 +20,7 @@ export default async function ProtectedLayout({
         {children}
       </main>
       <BottomNav role={user.role as UserRole} />
+      <NotificationHandler />
     </div>
   );
 }

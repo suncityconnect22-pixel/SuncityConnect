@@ -1,7 +1,3 @@
-// ============================================================
-// Supabase Browser Client — for Client Components
-// ============================================================
-
 import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
@@ -10,3 +6,6 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
+
+// Export a singleton for easier use in client components
+export const supabase = createClient();
