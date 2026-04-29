@@ -10,7 +10,7 @@ import Modal from '@/components/ui/Modal';
 import Toast from '@/components/ui/Toast';
 import ImageWithModal from '@/components/ui/ImageWithModal';
 import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
-import { supabase } from '@/lib/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import type { ComplaintStatus } from '@/lib/types';
 
 interface ComplaintWithUser {
@@ -49,29 +49,11 @@ export default function AdminComplaintsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    loadComplaints();
+  // Initial load
+  useEffect(() => { loadComplaints(); }, [loadComplaints]);
 
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('realtime:admin_complaints')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'complaints',
-        },
-        () => {
-          loadComplaints();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [loadComplaints]);
+  // Realtime + polling
+  useRealtimeSync('complaints', loadComplaints);
 
   const handleStatusChange = async (id: string, newStatus: ComplaintStatus) => {
     const result = await updateComplaintStatus(id, newStatus);

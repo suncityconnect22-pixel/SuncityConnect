@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Toast from '@/components/ui/Toast';
 import { ROLE_LABELS, PAYMENT_STATUS_LABELS } from '@/lib/constants';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import type { User, UserRole, PaymentStatus } from '@/lib/types';
 
 export default function AdminUsersPage() {
@@ -23,6 +24,9 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Realtime + polling for user updates
+  useRealtimeSync('users', load);
 
   const handleApprove = async (id: string) => {
     const r = await approveUser(id);

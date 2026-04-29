@@ -10,7 +10,7 @@ import TextArea from '@/components/ui/TextArea';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import Toast from '@/components/ui/Toast';
-import { supabase } from '@/lib/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import type { Notice } from '@/lib/types';
 
 export default function AdminNoticesPage() {
@@ -32,20 +32,11 @@ export default function AdminNoticesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    loadNotices();
+  // Initial load
+  useEffect(() => { loadNotices(); }, [loadNotices]);
 
-    const channel = supabase
-      .channel('realtime:admin_notices')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notices' },
-        () => { loadNotices(); }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [loadNotices]);
+  // Realtime + polling
+  useRealtimeSync('notices', loadNotices);
 
   const openCreate = () => {
     setEditing(null);

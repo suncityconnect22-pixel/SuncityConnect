@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card';
 import ImageWithModal from '@/components/ui/ImageWithModal';
 import Toast from '@/components/ui/Toast';
 import { VISITOR_TYPE_ICONS, VISITOR_TYPE_LABELS } from '@/lib/constants';
-import { supabase } from '@/lib/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import type { Visitor } from '@/lib/types';
 
 export default function AdminVisitorsPage() {
@@ -21,29 +21,11 @@ export default function AdminVisitorsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    loadVisitors();
+  // Initial load
+  useEffect(() => { loadVisitors(); }, [loadVisitors]);
 
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('realtime:admin_visitors')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'visitors',
-        },
-        () => {
-          loadVisitors();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [loadVisitors]);
+  // Realtime + polling
+  useRealtimeSync('visitors', loadVisitors);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to permanently delete this visitor log?')) return;

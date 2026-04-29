@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { useState, useEffect, useCallback } from 'react';
+import { getMyVisitors } from '@/actions/visitors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ImageWithModal from '@/components/ui/ImageWithModal';
 import { VISITOR_TYPE_LABELS, VISITOR_TYPE_ICONS } from '@/lib/constants';
 import EmptyState from '@/components/ui/EmptyState';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 interface Visitor {
   id: string;
@@ -18,41 +19,21 @@ interface Visitor {
   house_number: string;
 }
 
-export default function VisitorList({ initialVisitors, houseNumber }: { initialVisitors: Visitor[], houseNumber: string }) {
+export default function VisitorList({ initialVisitors }: { initialVisitors: Visitor[], houseNumber: string }) {
   const [visitors, setVisitors] = useState<Visitor[]>(initialVisitors);
 
-  useEffect(() => {
-    // Subscribe to new visitors for this house
-    const channel = supabase
-      .channel('realtime:visitors')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'visitors',
-          filter: `house_number=eq.${houseNumber}`,
-        },
-        (payload) => {
-          console.log('Change received!', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            const newVisitor = payload.new as Visitor;
-            setVisitors((prev) => [newVisitor, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedVisitor = payload.new as Visitor;
-            setVisitors((prev) => prev.map(v => v.id === updatedVisitor.id ? updatedVisitor : v));
-          } else if (payload.eventType === 'DELETE') {
-            setVisitors((prev) => prev.filter(v => v.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
+  const loadVisitors = useCallback(async () => {
+    const result = await getMyVisitors();
+    if (result.data) setVisitors(result.data as Visitor[]);
+  }, []);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [houseNumber]);
+  // Realtime + polling
+  useRealtimeSync('visitors', loadVisitors);
+
+  // Sync if initialVisitors changes (e.g., from server re-render)
+  useEffect(() => {
+    setVisitors(initialVisitors);
+  }, [initialVisitors]);
 
   if (visitors.length === 0) {
     return (
