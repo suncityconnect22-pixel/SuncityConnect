@@ -1,12 +1,23 @@
 /* eslint-disable no-undef */
 // Firebase Messaging Service Worker
 // Handles background push notifications
+// v2 — added skipWaiting + clients.claim for instant activation
 
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
+// Activate immediately — don't wait for old SW to die
+self.addEventListener('install', (event) => {
+  console.log('[firebase-messaging-sw.js] Installing...');
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('[firebase-messaging-sw.js] Activating...');
+  event.waitUntil(clients.claim());
+});
+
 // Initialize Firebase in the service worker
-// These values will be replaced at runtime via query params or hardcoded
 firebase.initializeApp({
   apiKey: 'AIzaSyAA5fDwZM72cd3dh7QmmIxpgUI3Jyg7aa0',
   authDomain: 'suncityconnect-83bc5.firebaseapp.com',
@@ -28,7 +39,9 @@ messaging.onBackgroundMessage((payload) => {
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     tag: payload.data?.tag || 'general',
-    data: payload.data,
+    data: payload.data || {},
+    vibrate: [100, 50, 100],
+    renotify: true,
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -36,6 +49,7 @@ messaging.onBackgroundMessage((payload) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
+  console.log('[firebase-messaging-sw.js] Notification clicked');
   event.notification.close();
 
   // Navigate to the app when notification is clicked
@@ -46,6 +60,7 @@ self.addEventListener('notificationclick', (event) => {
       // If app is already open, focus it
       for (const client of windowClients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(urlToOpen);
           return client.focus();
         }
       }

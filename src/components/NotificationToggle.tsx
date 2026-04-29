@@ -21,8 +21,6 @@ export default function NotificationToggle() {
     const granted = await requestNotificationPermission();
     if (granted) {
       setStatus('granted');
-      // The NotificationHandler in layout will pick this up and register the token
-      window.location.reload(); // Simple way to re-trigger the handler's useEffect
     } else {
       setStatus(Notification.permission);
     }

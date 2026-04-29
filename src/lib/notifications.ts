@@ -7,18 +7,40 @@ import { createClient } from '@/lib/supabase/server';
 
 // Initialize Firebase Admin (singleton)
 if (!admin.apps.length) {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   
-  if (serviceAccount) {
+  if (serviceAccountRaw) {
     try {
+      // Strip surrounding quotes if present (some env loaders add them)
+      let raw = serviceAccountRaw.trim();
+      if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
+        raw = raw.slice(1, -1);
+      }
+
+      // Try parsing directly first (works with properly formatted JSON)
+      let serviceAccount;
+      try {
+        serviceAccount = JSON.parse(raw);
+      } catch {
+        // Fallback: handle malformed escaping (mixed \" and " quotes)
+        const fixed = raw.replace(/\\"/g, '"').replace(/\\\\n/g, '\\n');
+        serviceAccount = JSON.parse(fixed);
+      }
+      
+      // Ensure private_key has actual newlines (not literal \n strings)
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+
       admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(serviceAccount)),
+        credential: admin.credential.cert(serviceAccount),
       });
+      console.log('[Firebase Admin] Initialized successfully');
     } catch (e) {
-      console.error('Firebase Admin init error:', e);
+      console.error('[Firebase Admin] Init error:', e);
     }
   } else {
-    console.warn('FIREBASE_SERVICE_ACCOUNT_KEY not set — push notifications disabled');
+    console.warn('[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not set — push notifications disabled');
   }
 }
 
@@ -31,17 +53,28 @@ export async function sendNotificationToUsers(
   body: string,
   data?: Record<string, string>
 ) {
-  if (!admin.apps.length) return;
+  if (!admin.apps.length) {
+    console.warn('[Firebase Admin] No app initialized, skipping notification');
+    return;
+  }
 
   const supabase = await createClient();
 
   // Get tokens for these users
-  const { data: tokens } = await supabase
+  const { data: tokens, error: tokenError } = await supabase
     .from('push_tokens')
     .select('token')
     .in('user_id', userIds);
 
-  if (!tokens || tokens.length === 0) return;
+  if (tokenError) {
+    console.error('[Firebase Admin] Error fetching tokens:', tokenError);
+    return;
+  }
+
+  if (!tokens || tokens.length === 0) {
+    console.log('[Firebase Admin] No push tokens found for users:', userIds);
+    return;
+  }
 
   const tokenList = tokens.map((t) => t.token);
 
@@ -62,8 +95,12 @@ export async function sendNotificationToUsers(
     if (response.failureCount > 0) {
       const invalidTokens: string[] = [];
       response.responses.forEach((resp, idx) => {
-        if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
-          invalidTokens.push(tokenList[idx]);
+        if (!resp.success) {
+          console.error(`[Firebase Admin] Token ${idx} failed:`, resp.error?.code, resp.error?.message);
+          if (resp.error?.code === 'messaging/registration-token-not-registered' ||
+              resp.error?.code === 'messaging/invalid-registration-token') {
+            invalidTokens.push(tokenList[idx]);
+          }
         }
       });
 
@@ -72,12 +109,13 @@ export async function sendNotificationToUsers(
           .from('push_tokens')
           .delete()
           .in('token', invalidTokens);
+        console.log(`[Firebase Admin] Cleaned up ${invalidTokens.length} invalid tokens`);
       }
     }
 
-    console.log(`Sent ${response.successCount}/${tokenList.length} notifications`);
+    console.log(`[Firebase Admin] Sent ${response.successCount}/${tokenList.length} notifications`);
   } catch (error) {
-    console.error('Error sending notifications:', error);
+    console.error('[Firebase Admin] Error sending notifications:', error);
   }
 }
 
