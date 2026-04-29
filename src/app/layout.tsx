@@ -33,7 +33,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+            }
+          } catch(e) {}
+        `}} />
+      </head>
       <body className="min-h-full flex flex-col antialiased bg-gray-50 text-gray-900">
         {children}
       </body>

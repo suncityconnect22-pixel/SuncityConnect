@@ -122,3 +122,88 @@ body {
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* =================== DARK MODE =================== */
+html.dark {
+  --background: #0f1117;
+  --foreground: #e5e7eb;
+}
+
+/* Body & general backgrounds */
+html.dark body {
+  background: #0f1117;
+  color: #e5e7eb;
+}
+
+/* Cards */
+html.dark .bg-white {
+  background-color: #1a1d27 !important;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-100 {
+  background-color: #1e2130 !important;
+}
+
+/* Text overrides */
+html.dark .text-gray-900 { color: #f3f4f6 !important; }
+html.dark .text-gray-800 { color: #e5e7eb !important; }
+html.dark .text-gray-700 { color: #d1d5db !important; }
+html.dark .text-gray-600 { color: #9ca3af !important; }
+html.dark .text-gray-500 { color: #6b7280 !important; }
+html.dark .text-gray-400 { color: #4b5563 !important; }
+
+/* Borders */
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: #2a2d3a !important;
+}
+
+/* Input backgrounds */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1e2130 !important;
+  border-color: #2a2d3a !important;
+  color: #e5e7eb !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #4b5563 !important;
+}
+
+/* Bottom nav */
+html.dark .bg-white\/95 {
+  background-color: rgba(26, 29, 39, 0.95) !important;
+}
+
+/* Gradient hero card — keep vibrant in dark */
+html.dark .from-blue-600 { --tw-gradient-from: #3b82f6; }
+html.dark .to-indigo-700 { --tw-gradient-to: #4338ca; }
+
+/* Badge adjustments */
+html.dark .bg-blue-50 { background-color: #1e3a5f !important; }
+html.dark .bg-red-50 { background-color: #3b1c1c !important; }
+html.dark .bg-green-50 { background-color: #1a3a2a !important; }
+html.dark .bg-orange-50 { background-color: #3a2a1a !important; }
+html.dark .bg-amber-50 { background-color: #3a3020 !important; }
+html.dark .bg-indigo-50 { background-color: #1e1e3a !important; }
+
+/* Modal overlay */
+html.dark .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar {
+  width: 6px;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #1a1d27;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2a2d3a;
+  border-radius: 3px;
+}
+
