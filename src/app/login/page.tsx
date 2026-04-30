@@ -5,6 +5,7 @@ import { signInWithPassword, signUpWithPassword } from '@/actions/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -29,7 +30,6 @@ export default function LoginPage() {
         setError(result.error);
         setLoading(false);
       } else {
-        // If email confirmation is disabled, user is now logged in.
         router.push('/dashboard');
         router.refresh();
       }
@@ -48,14 +48,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-blue-50 to-white">
       <div className="w-full max-w-sm">
-        {/* Logo / Branding */}
+        {/* Logo / Branding — text logo only */}
         <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-3xl">🏘️</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">SuncityConnect</h1>
+          <Image 
+            src="/suncity-text-logo.png" 
+            alt="SuncityConnect" 
+            width={400} 
+            height={80} 
+            className="mx-auto mb-3"
+            style={{ width: '100%', height: 'auto', maxWidth: '380px' }}
+            priority
+          />
           <p className="text-gray-500 mt-1 text-sm">Smart Society Management</p>
-          <p className="text-gray-400 text-xs mt-0.5">स्मार्ट सोसाइटी प्रबंधन</p>
         </div>
 
         {/* Login Form */}

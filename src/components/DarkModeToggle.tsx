@@ -9,9 +9,12 @@ export default function DarkModeToggle() {
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (saved === 'dark') {
       setDark(true);
       document.documentElement.classList.add('dark');
+    } else {
+      // Ensure light mode is the default
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 
