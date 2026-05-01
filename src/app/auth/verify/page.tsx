@@ -58,15 +58,22 @@ function VerifyOtpContent() {
   const handleVerify = async (token: string) => {
     setLoading(true);
     setError('');
-    const result = await verifyOtp(email, token);
+    
+    try {
+      const result = await verifyOtp(email, token);
 
-    if (result.error) {
-      setError(result.error);
-      setOtp(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      if (result.error) {
+        setError(result.error);
+        setOtp(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      } else {
+        router.push('/onboarding');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setLoading(false);
-    } else {
-      router.push('/onboarding');
     }
   };
 

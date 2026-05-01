@@ -55,36 +55,42 @@ export default function GuardPage() {
     if (!selectedType || !houseNumber.trim()) return;
     setLoading(true);
 
-    let uploadedUrl = undefined;
+    try {
+      let uploadedUrl = undefined;
 
-    // Upload photo if present
-    if (photoFile) {
-      const url = await uploadImage(photoFile, 'visitors');
-      if (url) uploadedUrl = url;
+      // Upload photo if present
+      if (photoFile) {
+        const url = await uploadImage(photoFile, 'visitors');
+        if (url) uploadedUrl = url;
+      }
+
+      const result = await recordVisitorEntry(
+        houseNumber.trim(),
+        selectedType,
+        visitorName.trim() || undefined,
+        uploadedUrl
+      );
+
+      if (result.error) {
+        setToast({ message: result.error, type: 'error' });
+      } else {
+        setToast({ message: `${VISITOR_TYPE_LABELS[selectedType]} entry recorded for ${houseNumber.toUpperCase()}`, type: 'success' });
+        await loadTodayVisitors();
+        
+        // Reset only on success or we keep data for retry? No, reset anyway
+        setStep('select');
+        setSelectedType(null);
+        setHouseNumber('');
+        setVisitorName('');
+        setPhotoFile(null);
+        setPhotoPreview(null);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setToast({ message: 'An unexpected error occurred.', type: 'error' });
+    } finally {
+      setLoading(false);
     }
-
-    const result = await recordVisitorEntry(
-      houseNumber.trim(),
-      selectedType,
-      visitorName.trim() || undefined,
-      uploadedUrl
-    );
-
-    if (result.error) {
-      setToast({ message: result.error, type: 'error' });
-    } else {
-      setToast({ message: `${VISITOR_TYPE_LABELS[selectedType]} entry recorded for ${houseNumber.toUpperCase()}`, type: 'success' });
-      await loadTodayVisitors();
-    }
-
-    // Reset
-    setStep('select');
-    setSelectedType(null);
-    setHouseNumber('');
-    setVisitorName('');
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    setLoading(false);
   };
 
   const handleExit = async (visitorId: string) => {

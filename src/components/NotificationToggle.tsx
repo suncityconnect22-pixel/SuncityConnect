@@ -28,13 +28,19 @@ export default function NotificationToggle() {
 
   const handleEnable = async () => {
     setLoading(true);
-    const granted = await requestNotificationPermission();
-    if (granted) {
-      setStatus('granted');
-    } else {
+    try {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        setStatus('granted');
+      } else {
+        setStatus(Notification.permission);
+      }
+    } catch (err) {
+      console.error(err);
       setStatus(Notification.permission);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // iOS Safari — show guidance instead of hiding

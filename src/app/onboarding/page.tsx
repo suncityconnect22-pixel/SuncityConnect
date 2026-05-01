@@ -35,18 +35,24 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const formData = new FormData();
-    formData.set('name', name);
-    formData.set('phone', phone);
-    formData.set('house_number', houseNumber);
+    try {
+      const formData = new FormData();
+      formData.set('name', name);
+      formData.set('phone', phone);
+      formData.set('house_number', houseNumber);
 
-    const result = await updateProfile(formData);
+      const result = await updateProfile(formData);
 
-    if (result.error) {
-      setError(result.error);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        router.push('/waiting-approval');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setLoading(false);
-    } else {
-      router.push('/waiting-approval');
     }
   };
 

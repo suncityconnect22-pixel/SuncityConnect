@@ -20,28 +20,33 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const formData = new FormData();
-    formData.set('email', email);
-    formData.set('password', password);
-    
-    if (isSignUp) {
-      const result = await signUpWithPassword(formData);
-      if (result.error) {
-        setError(result.error);
-        setLoading(false);
+    try {
+      const formData = new FormData();
+      formData.set('email', email);
+      formData.set('password', password);
+      
+      if (isSignUp) {
+        const result = await signUpWithPassword(formData);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          router.push('/dashboard');
+          router.refresh();
+        }
       } else {
-        router.push('/dashboard');
-        router.refresh();
+        const result = await signInWithPassword(formData);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          router.push('/dashboard');
+          router.refresh();
+        }
       }
-    } else {
-      const result = await signInWithPassword(formData);
-      if (result.error) {
-        setError(result.error);
-        setLoading(false);
-      } else {
-        router.push('/dashboard');
-        router.refresh();
-      }
+    } catch (err: any) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

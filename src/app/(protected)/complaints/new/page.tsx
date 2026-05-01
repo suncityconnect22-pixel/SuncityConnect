@@ -18,15 +18,21 @@ export default function NewComplaintPage() {
     setLoading(true);
     setError('');
 
-    const formData = new FormData(e.currentTarget);
+    try {
+      const formData = new FormData(e.currentTarget);
 
-    const result = await createComplaint(formData);
-    if (result.error) {
-      setError(result.error);
+      const result = await createComplaint(formData);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        router.push('/complaints');
+        router.refresh();
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setLoading(false);
-    } else {
-      router.push('/complaints');
-      router.refresh();
     }
   };
 
