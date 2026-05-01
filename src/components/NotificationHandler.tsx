@@ -61,9 +61,12 @@ export default function NotificationHandler() {
     if (typeof window === 'undefined') return;
 
     const unsubscribe = onForegroundMessage((payload) => {
-      if (payload.notification) {
+      // Data-only messages: title/body are in payload.data
+      const title = payload.data?.title || payload.notification?.title;
+      const body = payload.data?.body || payload.notification?.body;
+      if (title || body) {
         setToast({
-          message: `${payload.notification.title || ''}: ${payload.notification.body || ''}`,
+          message: `${title || ''}: ${body || ''}`,
           type: 'success',
         });
       }

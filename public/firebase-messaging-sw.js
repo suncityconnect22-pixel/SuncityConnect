@@ -33,9 +33,10 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
-  const notificationTitle = payload.notification?.title || 'SuncityConnect';
+  // Data-only messages: title/body are in payload.data
+  const notificationTitle = payload.data?.title || 'SuncityConnect';
   const notificationOptions = {
-    body: payload.notification?.body || 'You have a new notification',
+    body: payload.data?.body || 'You have a new notification',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     tag: payload.data?.tag || 'general',

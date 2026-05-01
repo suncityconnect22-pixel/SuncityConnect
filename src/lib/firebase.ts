@@ -59,7 +59,7 @@ export const getFirebaseToken = async (): Promise<string | null> => {
  * Returns an unsubscribe function.
  */
 export const onForegroundMessage = (
-  callback: (payload: { notification?: { title?: string; body?: string } }) => void
+  callback: (payload: { notification?: { title?: string; body?: string }; data?: Record<string, string> }) => void
 ): (() => void) => {
   const messaging = getMessagingInstance();
   if (!messaging) return () => {};

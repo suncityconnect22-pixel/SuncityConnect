@@ -345,3 +345,16 @@ html.dark ::-webkit-scrollbar-thumb {
   background: #2a2d3a;
   border-radius: 3px;
 }
+
+/* Notice highlight card — dark mode */
+html.dark .notice-highlight-card {
+  background: linear-gradient(135deg, #1a1d27 0%, #1e2130 100%) !important;
+  border-color: rgba(96, 165, 250, 0.5) !important;
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Pulsing icon animation — used in dashboard notice cards */
+@keyframes noticePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}

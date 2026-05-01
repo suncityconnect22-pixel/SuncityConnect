@@ -81,13 +81,13 @@ export async function sendNotificationToUsers(
   try {
     const response = await admin.messaging().sendEachForMulticast({
       tokens: tokenList,
-      notification: { title, body },
-      data: data || {},
-      webpush: {
-        notification: {
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/icon-72x72.png',
-        },
+      // Send data-only message to prevent browser auto-showing a
+      // duplicate notification. Our service worker (background) and
+      // foreground handler will take care of display.
+      data: {
+        ...(data || {}),
+        title,
+        body,
       },
     });
 

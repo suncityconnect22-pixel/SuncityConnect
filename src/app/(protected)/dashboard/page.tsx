@@ -1,28 +1,88 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser } from '@/actions/users';
 import { getLatestNotice } from '@/actions/notices';
 import { getDashboardCounts } from '@/actions/dashboard';
 import { getAllComplaints } from '@/actions/complaints';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Header from '@/components/Header';
 import Badge from '@/components/ui/Badge';
 import { COMPLAINT_STATUS_LABELS } from '@/lib/constants';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import type { User, Notice, ComplaintStatus } from '@/lib/types';
 
-export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+interface DashboardData {
+  user: User | null;
+  latestNotice: Notice | null;
+  counts: {
+    pendingComplaints: number;
+    totalNotices: number;
+    visitorsCount: number;
+    pendingUsers: number;
+  };
+  recentComplaints: { id: string; title: string; status: string; house_number: string; created_at: string }[];
+}
 
-  const { data: latestNotice } = await getLatestNotice();
-  const isAdmin = user.role === 'admin' || user.role === 'super_admin';
-  const counts = await getDashboardCounts(isAdmin, user.house_number || '');
+export default function DashboardPage() {
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // For admin, get recent complaints (top 5)
-  let recentComplaints: { id: string; title: string; status: string; house_number: string; created_at: string }[] = [];
-  if (isAdmin) {
-    const { data } = await getAllComplaints();
-    if (data) recentComplaints = data.slice(0, 5);
+  const loadDashboard = useCallback(async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      const { data: latestNotice } = await getLatestNotice();
+      const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+      const counts = await getDashboardCounts(isAdmin, user.house_number || '');
+
+      let recentComplaints: DashboardData['recentComplaints'] = [];
+      if (isAdmin) {
+        const { data: complaintData } = await getAllComplaints();
+        if (complaintData) recentComplaints = complaintData.slice(0, 5);
+      }
+
+      setData({
+        user: user as User,
+        latestNotice: latestNotice as Notice | null,
+        counts,
+        recentComplaints,
+      });
+    } catch {
+      // silently fail on refresh
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  // Initial load
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  // Realtime sync for complaints, notices, visitors
+  useRealtimeSync('complaints', loadDashboard);
+  useRealtimeSync('notices', loadDashboard);
+  useRealtimeSync('visitors', loadDashboard);
+
+  if (loading || !data?.user) {
+    return (
+      <>
+        <Header title="SuncityConnect" />
+        <div className="flex justify-center py-20">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+      </>
+    );
   }
+
+  const { user, latestNotice, counts, recentComplaints } = data;
+  const isAdmin = user.role === 'admin' || user.role === 'super_admin';
 
   return (
     <>
@@ -106,21 +166,50 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Latest Notice */}
+            {/* Latest Notice — Enhanced */}
             {latestNotice && (
               <Link href="/admin/notices" className="block active:opacity-70 transition-opacity">
-                <Card highlight={latestNotice.is_important} className="rounded-2xl overflow-hidden">
-                  <div className="flex items-start gap-3">
-                    <div className={`text-xl shrink-0 p-2.5 rounded-xl ${latestNotice.is_important ? 'bg-red-50' : 'bg-blue-50'}`}>
-                      {latestNotice.is_important ? '🔴' : '📢'}
+                <div className="notice-highlight-card rounded-2xl overflow-hidden border-2 relative"
+                  style={{
+                    borderColor: latestNotice.is_important ? '#f87171' : '#60a5fa',
+                    background: latestNotice.is_important
+                      ? 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 50%, #ffe4e6 100%)'
+                      : 'linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #dbeafe 100%)',
+                    boxShadow: latestNotice.is_important
+                      ? '0 4px 24px rgba(239, 68, 68, 0.18), 0 0 0 1px rgba(239, 68, 68, 0.08)'
+                      : '0 4px 24px rgba(59, 130, 246, 0.18), 0 0 0 1px rgba(59, 130, 246, 0.08)',
+                  }}
+                >
+                  {/* Top animated accent bar */}
+                  <div
+                    className="h-1.5"
+                    style={{
+                      background: latestNotice.is_important
+                        ? 'linear-gradient(90deg, #ef4444, #f97316, #ef4444)'
+                        : 'linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 2s linear infinite',
+                    }}
+                  />
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`text-xl shrink-0 p-2.5 rounded-xl ${latestNotice.is_important ? 'bg-red-100' : 'bg-blue-100'}`}
+                        style={{ animation: 'noticePulse 2s ease-in-out infinite' }}
+                      >
+                        {latestNotice.is_important ? '🚨' : '📢'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider ${latestNotice.is_important ? 'text-red-600' : 'text-blue-600'}`}>
+                            {latestNotice.is_important ? '⚠️ Important Notice' : 'Latest Notice'}
+                          </span>
+                          {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-sm mt-0.5 line-clamp-2">{latestNotice.title}</h3>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Latest Notice</span>
-                      <h3 className="font-bold text-gray-900 truncate text-sm mt-0.5">{latestNotice.title}</h3>
-                    </div>
-                    {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
                   </div>
-                </Card>
+                </div>
               </Link>
             )}
 
@@ -172,23 +261,50 @@ export default async function DashboardPage() {
         ) : (
           /* ========== REGULAR USER DASHBOARD ========== */
           <>
-            {/* Latest Notice */}
+            {/* Latest Notice — Enhanced for Users */}
             {latestNotice && (
               <Link href="/notices" className="block active:opacity-70 transition-opacity">
-                <Card highlight={latestNotice.is_important} className="shadow-sm border-gray-100 rounded-2xl overflow-hidden">
-                  <div className="flex items-start gap-4 p-1">
-                    <div className={`text-2xl shrink-0 p-3 rounded-xl ${latestNotice.is_important ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                      {latestNotice.is_important ? '🔴' : '📢'}
-                    </div>
-                    <div className="flex-1 min-w-0 pt-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Latest Notice</span>
-                        {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
+                <div className="notice-highlight-card rounded-2xl overflow-hidden border-2 relative"
+                  style={{
+                    borderColor: latestNotice.is_important ? '#f87171' : '#60a5fa',
+                    background: latestNotice.is_important
+                      ? 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 50%, #ffe4e6 100%)'
+                      : 'linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #dbeafe 100%)',
+                    boxShadow: latestNotice.is_important
+                      ? '0 4px 24px rgba(239, 68, 68, 0.18), 0 0 0 1px rgba(239, 68, 68, 0.08)'
+                      : '0 4px 24px rgba(59, 130, 246, 0.18), 0 0 0 1px rgba(59, 130, 246, 0.08)',
+                  }}
+                >
+                  {/* Top animated accent bar */}
+                  <div
+                    className="h-1.5"
+                    style={{
+                      background: latestNotice.is_important
+                        ? 'linear-gradient(90deg, #ef4444, #f97316, #ef4444)'
+                        : 'linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 2s linear infinite',
+                    }}
+                  />
+                  <div className="p-4">
+                    <div className="flex items-start gap-4">
+                      <div className={`text-2xl shrink-0 p-3 rounded-xl ${latestNotice.is_important ? 'bg-red-100' : 'bg-blue-100'}`}
+                        style={{ animation: 'noticePulse 2s ease-in-out infinite' }}
+                      >
+                        {latestNotice.is_important ? '🚨' : '📢'}
                       </div>
-                      <h3 className="font-bold text-gray-900 truncate text-base">{latestNotice.title}</h3>
+                      <div className="flex-1 min-w-0 pt-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider ${latestNotice.is_important ? 'text-red-600' : 'text-blue-600'}`}>
+                            {latestNotice.is_important ? '⚠️ Important Notice' : 'Latest Notice'}
+                          </span>
+                          {latestNotice.is_important && <Badge variant="danger">Important</Badge>}
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-base mt-0.5 line-clamp-2">{latestNotice.title}</h3>
+                      </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               </Link>
             )}
 

@@ -15,7 +15,7 @@ export async function getDashboardCounts(isAdmin = false, houseNumber = '') {
       supabase
         .from('complaints')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
+        .in('status', ['open', 'in_progress'])
     );
   } else if (houseNumber) {
     queries.push(
@@ -23,7 +23,7 @@ export async function getDashboardCounts(isAdmin = false, houseNumber = '') {
         .from('complaints')
         .select('*', { count: 'exact', head: true })
         .eq('house_number', houseNumber)
-        .eq('status', 'pending')
+        .in('status', ['open', 'in_progress'])
     );
   } else {
     queries.push(Promise.resolve({ count: 0 }));
